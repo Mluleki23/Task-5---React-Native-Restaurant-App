@@ -59,7 +59,7 @@ export default function LoginScreen({ navigation }: any) {
     </View>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
