@@ -3,8 +3,10 @@ import React from "react";
 
 import { Text, View } from "react-native";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import AdminDashboard from "../src/screens/admin/AdminDashboard";
 import LoginScreen from "../src/screens/auth/LoginScreen";
 import RegisterScreen from "../src/screens/auth/RegisterScreen";
+import UserDashboard from "../src/screens/user/UserDashboard";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,13 +22,17 @@ function HomeScreen() {
 
 // Root Navigator that switches based on user login
 function RootNavigator() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        // If user is logged in, show HomeScreen
-        <Stack.Screen name="Home" component={HomeScreen} />
+        // If user is logged in, show appropriate dashboard based on role
+        role === "admin" ? (
+          <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+        ) : (
+          <Stack.Screen name="UserDashboard" component={UserDashboard} />
+        )
       ) : (
         // Otherwise, show Auth screens
         <>
