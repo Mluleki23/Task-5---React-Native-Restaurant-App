@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { Order } from '../../types';
 
 type AdminStackParamList = {
   MenuManagement: undefined;

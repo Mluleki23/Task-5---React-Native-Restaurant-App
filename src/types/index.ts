@@ -24,6 +24,14 @@ export interface Order {
   total: number;
   status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
   deliveryAddress: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  subtotal?: number;
+  tax?: number;
+  deliveryFee?: number;
+  paymentMethod?: string;
+  paymentStatus?: string;
   createdAt: Date;
   updatedAt: Date;
 }

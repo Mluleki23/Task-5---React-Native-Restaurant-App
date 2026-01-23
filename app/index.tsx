@@ -6,7 +6,9 @@ import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import AdminStack from "../src/navigation/AdminStack";
 import LoginScreen from "../src/screens/auth/LoginScreen";
 import RegisterScreen from "../src/screens/auth/RegisterScreen";
-import UserDashboard from "../src/screens/user/UserDashboard";
+
+// Import UserStack inline to avoid import issues
+const UserStack = require("../src/navigation/UserStack").default;
 
 const Stack = createNativeStackNavigator();
 
@@ -31,7 +33,7 @@ function RootNavigator() {
         role === "admin" ? (
           <Stack.Screen name="AdminStack" component={AdminStack} />
         ) : (
-          <Stack.Screen name="UserDashboard" component={UserDashboard} />
+          <Stack.Screen name="UserStack" component={UserStack} />
         )
       ) : (
         // Otherwise, show Auth screens

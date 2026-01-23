@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { orderService } from '../../services/orderService';
 import { Order } from '../../types';
@@ -88,7 +88,10 @@ export default function OrdersManagement() {
     }
   };
 
-  const formatPrice = (price: number) => `R${price.toFixed(2)}`;
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined) return 'R0.00';
+    return `R${price.toFixed(2)}`;
+  };
 
   if (loading) {
     return (
