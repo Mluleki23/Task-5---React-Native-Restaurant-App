@@ -3,7 +3,7 @@ import React from "react";
 
 import { Text, View } from "react-native";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
-import AdminDashboard from "../src/screens/admin/AdminDashboard";
+import AdminStack from "../src/navigation/AdminStack";
 import LoginScreen from "../src/screens/auth/LoginScreen";
 import RegisterScreen from "../src/screens/auth/RegisterScreen";
 import UserDashboard from "../src/screens/user/UserDashboard";
@@ -29,7 +29,7 @@ function RootNavigator() {
       {user ? (
         // If user is logged in, show appropriate dashboard based on role
         role === "admin" ? (
-          <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
+          <Stack.Screen name="AdminStack" component={AdminStack} />
         ) : (
           <Stack.Screen name="UserDashboard" component={UserDashboard} />
         )
