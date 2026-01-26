@@ -6,15 +6,26 @@ interface ButtonProps {
   onPress: () => void;
   variant?: 'primary' | 'outline';
   style?: ViewStyle;
+  disabled?: boolean;
 }
 
-export default function Button({ title, onPress, variant = 'primary', style }: ButtonProps) {
+export default function Button({ title, onPress, variant = 'primary', style, disabled = false }: ButtonProps) {
   return (
     <TouchableOpacity 
-      style={[styles.button, variant === 'outline' ? styles.outlineButton : styles.primaryButton, style]}
+      style={[
+        styles.button, 
+        variant === 'outline' ? styles.outlineButton : styles.primaryButton, 
+        disabled && styles.disabledButton,
+        style
+      ]}
       onPress={onPress}
+      disabled={disabled}
     >
-      <Text style={[styles.text, variant === 'outline' ? styles.outlineText : styles.primaryText]}>
+      <Text style={[
+        styles.text, 
+        variant === 'outline' ? styles.outlineText : styles.primaryText,
+        disabled && styles.disabledText
+      ]}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -38,6 +49,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ff6347',
   },
+  disabledButton: {
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
   text: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -47,5 +62,8 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: '#ff6347',
+  },
+  disabledText: {
+    color: '#999',
   },
 });

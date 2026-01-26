@@ -1,5 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
+import Cart from '../screens/user/Cart';
+import Checkout from '../screens/user/Checkout';
 import UserDashboard from '../screens/user/UserDashboard';
 import ViewItem from '../screens/user/ViewItem';
 
@@ -27,6 +29,16 @@ export default function UserStack() {
         name="ViewItem" 
         component={ViewItem}
         options={{ title: 'Item Details' }}
+      />
+      <Stack.Screen 
+        name="Cart" 
+        component={Cart}
+        options={{ title: 'Cart' }}
+      />
+      <Stack.Screen 
+        name="Checkout" 
+        component={Checkout}
+        options={{ title: 'Checkout' }}
       />
     </Stack.Navigator>
   );

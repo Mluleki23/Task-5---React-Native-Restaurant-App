@@ -7,8 +7,9 @@ import AdminStack from "../src/navigation/AdminStack";
 import LoginScreen from "../src/screens/auth/LoginScreen";
 import RegisterScreen from "../src/screens/auth/RegisterScreen";
 
-// Import UserStack inline to avoid import issues
+// Import UserStack and CartProvider inline to avoid import issues
 const UserStack = require("../src/navigation/UserStack").default;
+const { CartProvider } = require("../src/context/CartContext");
 
 const Stack = createNativeStackNavigator();
 
@@ -50,7 +51,9 @@ function RootNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <RootNavigator />
+      <CartProvider>
+        <RootNavigator />
+      </CartProvider>
     </AuthProvider>
   );
 }

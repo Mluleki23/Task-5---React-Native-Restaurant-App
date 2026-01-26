@@ -15,6 +15,9 @@ import {
 import { foodService } from '../../services/foodService';
 import { FoodItem } from '../../types';
 
+// Import useCart inline to avoid import issues
+const { useCart } = require('../../context/CartContext');
+
 type UserStackParamList = {
   UserDashboard: undefined;
   ViewItem: { item: FoodItem };
@@ -33,6 +36,7 @@ export default function UserDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const navigation = useNavigation<UserNavigationProp>();
+  const { cart } = useCart();
 
   useEffect(() => {
     loadMenuItems();
@@ -84,6 +88,17 @@ export default function UserDashboard() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Restaurant Menu</Text>
+        <TouchableOpacity 
+          style={styles.cartButton}
+          onPress={() => navigation.navigate('Cart')}
+        >
+          <Ionicons name="cart" size={24} color="#ff6b6b" />
+          {cart.totalItems > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cart.totalItems}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Category Filter */}
@@ -217,10 +232,33 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
+  },
+  cartButton: {
+    position: 'relative',
+    padding: 5,
+  },
+  cartBadge: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    backgroundColor: '#ff6b6b',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 24,
