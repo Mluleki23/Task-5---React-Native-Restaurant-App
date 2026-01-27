@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
 import { Order } from '../types';
 import { db } from './firebase';
 
@@ -73,6 +73,27 @@ export const orderService = {
       });
     } catch (error) {
       console.error('Error updating order status:', error);
+      throw error;
+    }
+  },
+
+  async createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<Order> {
+    try {
+      const now = new Date();
+      const docRef = await addDoc(collection(db, 'orders'), {
+        ...orderData,
+        createdAt: now,
+        updatedAt: now,
+      });
+      
+      return {
+        id: docRef.id,
+        ...orderData,
+        createdAt: now,
+        updatedAt: now,
+      };
+    } catch (error) {
+      console.error('Error creating order:', error);
       throw error;
     }
   }

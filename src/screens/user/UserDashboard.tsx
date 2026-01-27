@@ -88,17 +88,25 @@ export default function UserDashboard() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Restaurant Menu</Text>
-        <TouchableOpacity 
-          style={styles.cartButton}
-          onPress={() => navigation.navigate('Cart')}
-        >
-          <Ionicons name="cart" size={24} color="#ff6b6b" />
-          {cart.totalItems > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cart.totalItems}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.cartButton}
+            onPress={() => navigation.navigate('Cart')}
+          >
+            <Ionicons name="cart" size={24} color="#ff6b6b" />
+            {cart.totalItems > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cart.totalItems}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Ionicons name="person" size={24} color="#ff6b6b" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Category Filter */}
@@ -240,8 +248,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   cartButton: {
     position: 'relative',
+    padding: 5,
+    marginRight: 15,
+  },
+  profileButton: {
     padding: 5,
   },
   cartBadge: {

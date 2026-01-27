@@ -2,17 +2,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+
+// Import orderService and Order inline to avoid import issues
+const { orderService } = require('../../services/orderService');
+const { Order } = require('../../types');
 
 export default function Checkout() {
   const navigation = useNavigation();
@@ -47,18 +51,50 @@ export default function Checkout() {
     setIsProcessing(true);
     
     try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Calculate total with delivery and tax
+      const subtotal = cart.totalPrice;
+      const deliveryFee = 15;
+      const tax = subtotal * 0.15;
+      const total = subtotal + deliveryFee + tax;
+
+      // Create order data with user information
+      const orderData: any = {
+        userId: user.uid,
+        items: cart.items.map(item => ({
+          foodItemId: item.foodItem.id,
+          name: item.foodItem.name,
+          price: item.foodItem.price,
+          quantity: item.quantity,
+          sides: item.sides,
+          drinks: item.drinks,
+          extras: item.extras,
+          removedIngredients: item.removedIngredients,
+        })),
+        total,
+        status: 'pending',
+        deliveryAddress,
+        customerName: user.displayName || 'User',
+        customerEmail: user.email,
+        customerPhone: user.phoneNumber || '',
+        subtotal,
+        tax,
+        deliveryFee,
+        paymentMethod: selectedCard,
+        paymentStatus: 'pending',
+      };
+
+      // Create the order in Firestore
+      const order = await orderService.createOrder(orderData);
       
       Alert.alert(
         'Order Placed Successfully!',
-        `Your order has been placed and will be delivered to:\n${deliveryAddress}\n\nOrder total: R${cart.totalPrice.toFixed(2)}`,
+        `Your order #${order.id.slice(-8)} has been placed and will be delivered to:\n${deliveryAddress}\n\nOrder total: R${total.toFixed(2)}`,
         [
           {
-            text: 'Track Order',
+            text: 'View Profile',
             onPress: () => {
               clearCart();
-              navigation.navigate('UserDashboard' as never);
+              navigation.navigate('Profile' as never);
             },
           },
           {
@@ -71,6 +107,7 @@ export default function Checkout() {
         ]
       );
     } catch (error) {
+      console.error('Error placing order:', error);
       Alert.alert('Error', 'Failed to place order. Please try again.');
     } finally {
       setIsProcessing(false);
