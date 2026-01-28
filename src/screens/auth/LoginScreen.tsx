@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import {
+import { useAuth } from "../../context/AuthContext";
+// Import React Native components inline to avoid TypeScript conflicts
+const {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
-} from "react-native";
-import { useAuth } from "../../context/AuthContext";
+} = require("react-native");
 
 export default function LoginScreen({ navigation }: any) {
   const { login } = useAuth();
@@ -30,6 +31,10 @@ export default function LoginScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.logoPlaceholder}>
+        <Text style={styles.logoText}>🍽️</Text>
+        <Text style={styles.logoBrand}>FoodApp</Text>
+      </View>
       <Text style={styles.title}>Welcome Back</Text>
 
       <TextInput
@@ -64,6 +69,25 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     paddingTop: 80,
+    alignItems: 'center',
+  },
+  logoPlaceholder: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 60,
+    marginBottom: 10,
+  },
+  logoBrand: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ff6b6b',
+  },
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
     fontSize: 26,
@@ -72,6 +96,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   input: {
+    width: '100%',
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
@@ -79,6 +104,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   button: {
+    width: '100%',
     backgroundColor: "#ff6347",
     padding: 15,
     borderRadius: 8,

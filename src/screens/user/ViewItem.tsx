@@ -171,7 +171,7 @@ export default function ViewItem() {
         <Image
           source={{ uri: item.imageUrl }}
           style={styles.itemImage}
-          defaultSource={require('../../../assets/images/FoodApp logo.png')}
+          defaultSource={require('../../../assets/images/FoodApp-logo.png')}
         />
 
         <View style={styles.itemInfo}>

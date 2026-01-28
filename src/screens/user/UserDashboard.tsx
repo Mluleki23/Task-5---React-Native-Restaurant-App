@@ -204,7 +204,7 @@ const FoodItemCard = ({
     <Image 
       source={{ uri: item.imageUrl }} 
       style={styles.itemImage}
-      defaultSource={require('../../../assets/images/FoodApp logo.png')}
+      defaultSource={require('../../../assets/images/FoodApp-logo.png')}
     />
     <View style={styles.itemInfo}>
       <Text style={styles.itemName}>{item.name}</Text>

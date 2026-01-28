@@ -124,7 +124,7 @@ export default function Cart() {
             <Image 
               source={{ uri: item.foodItem.imageUrl }} 
               style={styles.itemImage}
-              defaultSource={require('../../../assets/images/FoodApp logo.png')}
+              defaultSource={require('../../../assets/images/FoodApp-logo.png')}
             />
             
             <View style={styles.itemInfo}>
