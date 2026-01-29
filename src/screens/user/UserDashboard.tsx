@@ -3,20 +3,21 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { foodService } from '../../services/foodService';
 import { FoodItem } from '../../types';
 
-// Import useCart inline to avoid import issues
+// Import hooks inline to avoid import issues
 const { useCart } = require('../../context/CartContext');
+const { useAuth } = require('../../context/AuthContext');
 
 type UserStackParamList = {
   UserDashboard: undefined;
@@ -37,6 +38,7 @@ export default function UserDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const navigation = useNavigation<UserNavigationProp>();
   const { cart } = useCart();
+  const { logout } = useAuth();
 
   useEffect(() => {
     loadMenuItems();
@@ -65,6 +67,26 @@ export default function UserDashboard() {
     navigation.navigate('ViewItem', { item });
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: () => {
+            logout();
+            // Navigation will be handled automatically by AuthContext
+          },
+        },
+      ]
+    );
+  };
+
   const groupedItems = categories.reduce((acc, category) => {
     acc[category] = foodItems.filter(item => 
       item.category === category && item.available
@@ -90,6 +112,12 @@ export default function UserDashboard() {
         <Text style={styles.title}>Restaurant Menu</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Ionicons name="log-out" size={20} color="#ff6b6b" />
+          </TouchableOpacity>
+          <TouchableOpacity 
             style={styles.cartButton}
             onPress={() => navigation.navigate('Cart')}
           >
@@ -99,12 +127,6 @@ export default function UserDashboard() {
                 <Text style={styles.cartBadgeText}>{cart.totalItems}</Text>
               </View>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Ionicons name="person" size={24} color="#ff6b6b" />
           </TouchableOpacity>
         </View>
       </View>
@@ -252,12 +274,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  logoutButton: {
+    padding: 8,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+  },
   cartButton: {
     position: 'relative',
-    padding: 5,
-    marginRight: 15,
-  },
-  profileButton: {
     padding: 5,
   },
   cartBadge: {
