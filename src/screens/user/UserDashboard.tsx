@@ -208,6 +208,47 @@ export default function UserDashboard() {
           ))
         )}
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNavigation}>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => {/* Already on dashboard */}}
+          activeOpacity={0.7}
+        >
+          <View style={styles.iconContainer}>
+            <Ionicons name="home" size={24} color="#ff6b6b" />
+          </View>
+          <Text style={[styles.navText, styles.activeNavText]}>Home</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Cart')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.iconContainer}>
+            <Ionicons name="cart" size={24} color="#8e8e93" />
+            {cart.totalItems > 0 && (
+              <View style={styles.bottomNavBadge}>
+                <Text style={styles.bottomNavBadgeText}>{cart.totalItems}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.navText}>Cart</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => navigation.navigate('Profile')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.iconContainer}>
+            <Ionicons name="person" size={24} color="#8e8e93" />
+          </View>
+          <Text style={styles.navText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -222,26 +263,30 @@ const FoodItemCard = ({
   <TouchableOpacity 
     style={styles.itemCard}
     onPress={() => onViewItem(item)}
+    activeOpacity={0.8}
   >
-    <Image 
-      source={{ uri: item.imageUrl }} 
-      style={styles.itemImage}
-      defaultSource={require('../../../assets/images/FoodApp-logo.png')}
-    />
-    <View style={styles.itemInfo}>
-      <Text style={styles.itemName}>{item.name}</Text>
-      <Text style={styles.itemDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-      <View style={styles.itemFooter}>
-        <Text style={styles.itemPrice}>R{item.price.toFixed(2)}</Text>
-        <TouchableOpacity 
-          style={styles.viewButton}
-          onPress={() => onViewItem(item)}
-        >
-          <Ionicons name="eye" size={16} color="white" />
-          <Text style={styles.viewButtonText}>View</Text>
-        </TouchableOpacity>
+    <View style={styles.itemContent}>
+      <Image 
+        source={{ uri: item.imageUrl }} 
+        style={styles.itemImage}
+        defaultSource={require('../../../assets/images/FoodApp-logo.png')}
+      />
+      <View style={styles.itemInfo}>
+        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemDescription} numberOfLines={1}>
+          {item.description}
+        </Text>
+        <View style={styles.itemFooter}>
+          <Text style={styles.itemPrice}>R{item.price.toFixed(2)}</Text>
+          <TouchableOpacity 
+            style={styles.viewButton}
+            onPress={() => onViewItem(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="eye" size={14} color="white" />
+            <Text style={styles.viewButtonText}>View</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   </TouchableOpacity>
@@ -307,25 +352,27 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
   categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     backgroundColor: '#f1f3f4',
-    marginRight: 10,
+    marginRight: 8,
+    minWidth: 60,
   },
   selectedCategory: {
     backgroundColor: '#ff6b6b',
   },
   categoryChipText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     fontWeight: '500',
+    textAlign: 'center',
   },
   selectedCategoryText: {
     color: 'white',
@@ -356,34 +403,39 @@ const styles = StyleSheet.create({
   itemCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    marginBottom: 15,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  itemContent: {
+    flexDirection: 'row',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   itemImage: {
-    width: '100%',
-    height: 150,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    width: 100,
+    height: 100,
     backgroundColor: '#f1f3f4',
   },
   itemInfo: {
-    padding: 15,
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#2c3e50',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   itemDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginBottom: 10,
-    lineHeight: 20,
+    marginBottom: 8,
+    lineHeight: 18,
   },
   itemFooter: {
     flexDirection: 'row',
@@ -391,7 +443,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   itemPrice: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#ff6b6b',
   },
@@ -399,14 +451,77 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ff6b6b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
   },
   viewButtonText: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    marginLeft: 4,
+    marginLeft: 3,
+  },
+  bottomNavigation: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e8e8e8',
+    paddingBottom: 8,
+    paddingTop: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingVertical: 4,
+  },
+  iconContainer: {
+    position: 'relative',
+    marginBottom: 2,
+  },
+  navText: {
+    fontSize: 11,
+    color: '#8e8e93',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  activeNavText: {
+    color: '#ff6b6b',
+    fontWeight: '600',
+  },
+  bottomNavBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 28,
+    backgroundColor: '#ff4757',
+    borderRadius: 12,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    shadowColor: '#ff4757',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  bottomNavBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    lineHeight: 12,
   },
 });
