@@ -142,8 +142,9 @@ export default function UserDashboard() {
             </View>
 
             <View style={styles.topActions}>
-              <TouchableOpacity style={styles.iconAction} onPress={handleLogout}>
-                <Ionicons name="log-out-outline" size={20} color="#102a43" />
+              <TouchableOpacity style={styles.logoutAction} onPress={handleLogout}>
+                <Ionicons name="log-out-outline" size={18} color="#102a43" />
+                <Text style={styles.logoutActionText}>Logout</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -527,17 +528,23 @@ const styles = StyleSheet.create({
     color: '#102a43',
   },
   topActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     gap: 10,
   },
-  iconAction: {
-    width: 42,
+  logoutAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
     height: 42,
     borderRadius: 21,
     backgroundColor: '#ffffff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
+  },
+  logoutActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#102a43',
   },
   cartAction: {
     width: 48,
