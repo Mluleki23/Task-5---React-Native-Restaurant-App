@@ -1,11 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
   RefreshControl,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  View
+  View,
 } from 'react-native';
+
 import { foodService } from '../../services/foodService';
 import { orderService } from '../../services/orderService';
 import { userService } from '../../services/userService';
@@ -46,22 +49,14 @@ export default function Analytics() {
   const loadAnalyticsData = async () => {
     try {
       setLoading(true);
-      
-      // Load all data
+
       const orders = await orderService.getAllOrders();
-      const foodItems = await foodService.getAllFoodItems();
+      await foodService.getAllFoodItems();
       const users = await userService.getAllUsers();
 
-      // Calculate daily revenue for last 7 days
       const dailyRevenue = calculateDailyRevenue(orders);
-      
-      // Calculate top selling items
       const topSellingItems = calculateTopSellingItems(orders);
-      
-      // Calculate order status distribution
       const orderStatusDistribution = calculateOrderStatusDistribution(orders);
-      
-      // Calculate monthly stats
       const monthlyStats = calculateMonthlyStats(orders, users);
 
       setAnalyticsData({
@@ -70,7 +65,6 @@ export default function Analytics() {
         orderStatusDistribution,
         monthlyStats,
       });
-      
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
@@ -82,28 +76,28 @@ export default function Analytics() {
   const calculateDailyRevenue = (orders: any[]) => {
     const last7Days = [];
     const today = new Date();
-    
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      
-      const dayOrders = orders.filter(order => {
+
+      const dayOrders = orders.filter((order) => {
         const orderDate = new Date(order.createdAt);
         return orderDate.toDateString() === date.toDateString();
       });
-      
+
       const dayRevenue = dayOrders.reduce((sum, order) => sum + order.total, 0);
       last7Days.push({ day: dayName, revenue: dayRevenue });
     }
-    
+
     return last7Days;
   };
 
   const calculateTopSellingItems = (orders: any[]) => {
     const itemSales: { [key: string]: number } = {};
-    
-    orders.forEach(order => {
+
+    orders.forEach((order) => {
       order.items.forEach((item: any) => {
         if (itemSales[item.name]) {
           itemSales[item.name] += item.quantity;
@@ -112,7 +106,7 @@ export default function Analytics() {
         }
       });
     });
-    
+
     return Object.entries(itemSales)
       .map(([name, quantity]) => ({ name, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
@@ -122,43 +116,46 @@ export default function Analytics() {
   const calculateOrderStatusDistribution = (orders: any[]) => {
     const statusCount: { [key: string]: number } = {};
     const colors = {
-      pending: '#ff6b6b',
-      preparing: '#feca57',
-      ready: '#48dbfb',
-      delivered: '#1dd1a1',
-      cancelled: '#ee5a6f',
+      pending: '#ff7a59',
+      preparing: '#f5a623',
+      ready: '#2bb0ed',
+      delivered: '#20a39e',
+      cancelled: '#d64545',
     };
-    
-    orders.forEach(order => {
+
+    orders.forEach((order) => {
       if (statusCount[order.status]) {
         statusCount[order.status]++;
       } else {
         statusCount[order.status] = 1;
       }
     });
-    
+
     return Object.entries(statusCount).map(([name, population]) => ({
       name,
       population,
-      color: colors[name as keyof typeof colors] || '#999',
+      color: colors[name as keyof typeof colors] || '#94a3b8',
     }));
   };
 
   const calculateMonthlyStats = (orders: any[], users: any[]) => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
-    const monthOrders = orders.filter(order => {
+
+    const monthOrders = orders.filter((order) => {
       const orderDate = new Date(order.createdAt);
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear;
+      return (
+        orderDate.getMonth() === currentMonth &&
+        orderDate.getFullYear() === currentYear
+      );
     });
-    
+
     const totalRevenue = monthOrders.reduce((sum, order) => sum + order.total, 0);
-    const averageOrderValue = monthOrders.length > 0 ? totalRevenue / monthOrders.length : 0;
-    
-    // Calculate active users (users who placed orders this month)
-    const activeUserIds = new Set(monthOrders.map(order => order.userId));
-    
+    const averageOrderValue =
+      monthOrders.length > 0 ? totalRevenue / monthOrders.length : 0;
+
+    const activeUserIds = new Set(monthOrders.map((order) => order.userId));
+
     return {
       totalOrders: monthOrders.length,
       totalRevenue,
@@ -173,248 +170,403 @@ export default function Analytics() {
     loadAnalyticsData();
   };
 
-  const StatCard = ({ title, value, subtitle, color }: {
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    color: string;
-  }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <Text style={styles.statTitle}>{title}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
-    </View>
+  const maxDailyRevenue = Math.max(
+    ...analyticsData.dailyRevenue.map((item) => item.revenue),
+    1
   );
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading Analytics...</Text>
-      </View>
+      <SafeAreaView style={styles.loadingScreen}>
+        <View style={styles.loadingCard}>
+          <Text style={styles.loadingEyebrow}>Analytics</Text>
+          <Text style={styles.loadingText}>Crunching the numbers...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView 
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>Analytics Dashboard</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.heroCard}>
+          <Text style={styles.heroEyebrow}>Revenue Intelligence</Text>
+          <Text style={styles.heroTitle}>Analytics Dashboard</Text>
+          <Text style={styles.heroSubtitle}>
+            A cleaner view of monthly performance, daily revenue movement, and product demand.
+          </Text>
 
-      {/* Monthly Stats */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Monthly Performance</Text>
+          <View style={styles.heroMetrics}>
+            <MetricBadge
+              label="Monthly Revenue"
+              value={`R${analyticsData.monthlyStats.totalRevenue.toFixed(0)}`}
+            />
+            <MetricBadge
+              label="Monthly Orders"
+              value={`${analyticsData.monthlyStats.totalOrders}`}
+            />
+            <MetricBadge
+              label="Active Users"
+              value={`${analyticsData.monthlyStats.activeUsers}`}
+            />
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Monthly Performance</Text>
+          <Text style={styles.sectionSubtitle}>Core operational benchmarks</Text>
+        </View>
+
         <View style={styles.statsGrid}>
-          <StatCard 
-            title="Total Orders" 
-            value={analyticsData.monthlyStats.totalOrders}
-            color="#ff6b6b"
-          />
-          <StatCard 
-            title="Revenue" 
+          <StatCard
+            title="Revenue"
             value={`R${analyticsData.monthlyStats.totalRevenue.toFixed(2)}`}
-            color="#4ecdc4"
+            accent="#20a39e"
+            icon="cash-outline"
           />
-          <StatCard 
-            title="Avg Order Value" 
+          <StatCard
+            title="Total Orders"
+            value={`${analyticsData.monthlyStats.totalOrders}`}
+            accent="#1f6feb"
+            icon="receipt-outline"
+          />
+          <StatCard
+            title="Avg Order Value"
             value={`R${analyticsData.monthlyStats.averageOrderValue.toFixed(2)}`}
-            color="#45b7d1"
+            accent="#7c3aed"
+            icon="stats-chart-outline"
           />
-          <StatCard 
-            title="Active Users" 
+          <StatCard
+            title="Users Active"
             value={`${analyticsData.monthlyStats.activeUsers}/${analyticsData.monthlyStats.totalUsers}`}
-            subtitle="This month"
-            color="#96ceb4"
+            accent="#d94f30"
+            icon="people-outline"
           />
         </View>
-      </View>
 
-      {/* Daily Revenue Chart */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Daily Revenue (Last 7 Days)</Text>
-        <View style={styles.chartContainer}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Daily Revenue</Text>
+          <Text style={styles.sectionSubtitle}>Last 7 days</Text>
+        </View>
+
+        <View style={styles.panel}>
           {analyticsData.dailyRevenue.map((item, index) => (
-            <View key={index} style={styles.revenueItem}>
-              <Text style={styles.revenueDay}>{item.day}</Text>
-              <Text style={styles.revenueAmount}>R{item.revenue.toFixed(2)}</Text>
+            <View key={index} style={styles.revenueRow}>
+              <View style={styles.revenueRowHeader}>
+                <Text style={styles.revenueDay}>{item.day}</Text>
+                <Text style={styles.revenueAmount}>R{item.revenue.toFixed(2)}</Text>
+              </View>
+              <View style={styles.revenueTrack}>
+                <View
+                  style={[
+                    styles.revenueFill,
+                    { width: `${(item.revenue / maxDailyRevenue) * 100}%` },
+                  ]}
+                />
+              </View>
             </View>
           ))}
         </View>
-      </View>
 
-      {/* Top Selling Items */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Top Selling Items</Text>
-        <View style={styles.chartContainer}>
-          {analyticsData.topSellingItems.map((item, index) => (
-            <View key={index} style={styles.topItem}>
-              <Text style={styles.topItemName}>{item.name}</Text>
-              <Text style={styles.topItemQuantity}>{item.quantity} sold</Text>
-            </View>
-          ))}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Top Selling Items</Text>
+          <Text style={styles.sectionSubtitle}>Best performers by quantity sold</Text>
         </View>
-      </View>
 
-      {/* Order Status Distribution */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Order Status Distribution</Text>
-        <View style={styles.chartContainer}>
-          {analyticsData.orderStatusDistribution.map((item, index) => (
-            <View key={index} style={styles.statusItem}>
-              <View style={[styles.statusColor, { backgroundColor: item.color }]} />
-              <Text style={styles.statusText}>{item.name}: {item.population}</Text>
-            </View>
-          ))}
+        <View style={styles.panel}>
+          {analyticsData.topSellingItems.length === 0 ? (
+            <EmptyState text="No sales data available yet." />
+          ) : (
+            analyticsData.topSellingItems.map((item, index) => (
+              <View key={index} style={styles.listRow}>
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankBadgeText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.listPrimary}>{item.name}</Text>
+                <Text style={styles.listSecondary}>{item.quantity} sold</Text>
+              </View>
+            ))
+          )}
         </View>
-      </View>
-    </ScrollView>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Order Status Mix</Text>
+          <Text style={styles.sectionSubtitle}>How orders are distributed right now</Text>
+        </View>
+
+        <View style={styles.panel}>
+          {analyticsData.orderStatusDistribution.length === 0 ? (
+            <EmptyState text="No order status data available yet." />
+          ) : (
+            analyticsData.orderStatusDistribution.map((item, index) => (
+              <View key={index} style={styles.statusRow}>
+                <View style={styles.statusLabelWrap}>
+                  <View style={[styles.statusColor, { backgroundColor: item.color }]} />
+                  <Text style={styles.statusText}>
+                    {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
+                  </Text>
+                </View>
+                <Text style={styles.statusCount}>{item.population}</Text>
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
+
+const MetricBadge = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.metricBadge}>
+    <Text style={styles.metricValue}>{value}</Text>
+    <Text style={styles.metricLabel}>{label}</Text>
+  </View>
+);
+
+const StatCard = ({
+  title,
+  value,
+  accent,
+  icon,
+}: {
+  title: string;
+  value: string;
+  accent: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+}) => (
+  <View style={styles.statCard}>
+    <View style={[styles.statIcon, { backgroundColor: accent }]}>
+      <Ionicons name={icon} size={18} color="#fff" />
+    </View>
+    <Text style={styles.statTitle}>{title}</Text>
+    <Text style={styles.statValue}>{value}</Text>
+  </View>
+);
+
+const EmptyState = ({ text }: { text: string }) => (
+  <View style={styles.emptyState}>
+    <Ionicons name="analytics-outline" size={22} color="#94a3b8" />
+    <Text style={styles.emptyText}>{text}</Text>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#eef2f6',
   },
-  loadingContainer: {
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    padding: 18,
+    paddingBottom: 28,
+  },
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#eef2f6',
+    padding: 20,
+  },
+  loadingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 30,
+    alignItems: 'center',
+  },
+  loadingEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#4c6fff',
+    marginBottom: 10,
   },
   loadingText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  header: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontWeight: '700',
+    color: '#102a43',
   },
-  section: {
-    padding: 20,
+  heroCard: {
+    backgroundColor: '#102a43',
+    borderRadius: 30,
+    padding: 22,
+    marginBottom: 24,
+  },
+  heroEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#7dd3fc',
+    marginBottom: 10,
+  },
+  heroTitle: {
+    fontSize: 30,
+    fontWeight: '700',
+    color: '#f8fafc',
+    marginBottom: 8,
+  },
+  heroSubtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#cbd5e1',
+    marginBottom: 20,
+  },
+  heroMetrics: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  metricBadge: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  metricValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#cbd5e1',
+    fontWeight: '600',
+  },
+  sectionHeader: {
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 15,
+    fontSize: 21,
+    fontWeight: '700',
+    color: '#102a43',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#627d98',
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 24,
   },
   statCard: {
-    width: '48%',
+    width: '48.2%',
     backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 24,
+    padding: 18,
+    marginBottom: 12,
+  },
+  statIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   statTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#627d98',
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 2,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#102a43',
   },
-  statSubtitle: {
-    fontSize: 12,
-    color: '#999',
-  },
-  chartContainer: {
+  panel: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 26,
+    padding: 18,
+    marginBottom: 24,
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+  revenueRow: {
+    marginBottom: 14,
   },
-  legendContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 10,
-    marginVertical: 5,
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#666',
-  },
-  revenueItem: {
+  revenueRowHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f3f4',
+    marginBottom: 8,
   },
   revenueDay: {
     fontSize: 14,
-    color: '#666',
+    color: '#334e68',
+    fontWeight: '600',
   },
   revenueAmount: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#ff6b6b',
+    color: '#102a43',
+    fontWeight: '700',
   },
-  topItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f3f4',
+  revenueTrack: {
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#e6ecf2',
+    overflow: 'hidden',
   },
-  topItemName: {
-    fontSize: 14,
-    color: '#2c3e50',
-    flex: 1,
+  revenueFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: '#4c6fff',
   },
-  topItemQuantity: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4ecdc4',
-  },
-  statusItem: {
+  listRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eef2f6',
+  },
+  rankBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#102a43',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rankBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  listPrimary: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334e68',
+  },
+  listSecondary: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#20a39e',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eef2f6',
+  },
+  statusLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   statusColor: {
     width: 12,
@@ -424,6 +576,22 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    color: '#666',
+    fontWeight: '600',
+    color: '#334e68',
+  },
+  statusCount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#102a43',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#627d98',
+    marginTop: 10,
   },
 });
