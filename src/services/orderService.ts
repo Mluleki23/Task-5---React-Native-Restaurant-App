@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
 
 import { Order } from '../types';
 
@@ -7,6 +7,24 @@ import { db } from './firebase';
 
 
 export const orderService = {
+
+  async createOrder(order: Omit<Order, 'id'>): Promise<string> {
+
+    try {
+
+      const docRef = await addDoc(collection(db, 'orders'), order);
+
+      return docRef.id;
+
+    } catch (error) {
+
+      console.error('Error creating order:', error);
+
+      throw error;
+
+    }
+
+  },
 
   async getAllOrders(): Promise<Order[]> {
 

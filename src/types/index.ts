@@ -32,6 +32,7 @@ export interface Order {
   deliveryFee?: number;
   paymentMethod?: string;
   paymentStatus?: string;
+  paymentReference?: string;
   createdAt: Date;
   updatedAt: Date;
 }
