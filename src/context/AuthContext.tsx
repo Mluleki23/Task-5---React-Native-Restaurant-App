@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: any) => {
       role: "user", // default role
       ...data,
     });
+    await signOut(auth);
   };
 
   const login = async (email: string, password: string) => {
