@@ -5,6 +5,7 @@ import React from 'react';
 import Cart from '../screens/user/Cart';
 
 import Checkout from '../screens/user/Checkout';
+import ProfileScreen from '../screens/user/ProfileScreen';
 
 import UserDashboard from '../screens/user/UserDashboard';
 
@@ -79,6 +80,16 @@ export default function UserStack() {
         component={Checkout}
 
         options={{ title: 'Checkout' }}
+
+      />
+
+      <Stack.Screen 
+
+        name="Profile" 
+
+        component={ProfileScreen}
+
+        options={{ title: 'Profile' }}
 
       />
 
