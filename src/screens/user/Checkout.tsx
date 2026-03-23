@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -27,8 +28,17 @@ interface CheckoutProfileData {
   cardNumber?: string;
 }
 
+type UserStackParamList = {
+  UserDashboard: undefined;
+  Cart: undefined;
+  Checkout: undefined;
+  Profile: undefined;
+  OrderTracking: { orderId: string };
+  Login: undefined;
+};
+
 export default function Checkout() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<UserStackParamList>>();
   const { user } = useAuth();
   const { cart, clearCart } = useCart();
 
@@ -36,7 +46,7 @@ export default function Checkout() {
   const taxAmount = cart.totalPrice * 0.15;
   const orderTotal = cart.totalPrice + deliveryFee + taxAmount;
 
-  const [deliveryAddress, setDeliveryAddress] = useState(user?.address || '');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>('cash_on_delivery');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -114,7 +124,7 @@ export default function Checkout() {
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Login',
-            onPress: () => navigation.navigate('Login' as never),
+            onPress: () => navigation.navigate('Login'),
           },
         ]
       );
@@ -182,14 +192,14 @@ export default function Checkout() {
             text: 'Track Order',
             onPress: () => {
               clearCart();
-              navigation.navigate('OrderTracking' as never, { orderId } as never);
+              navigation.navigate('OrderTracking', { orderId });
             },
           },
           {
             text: 'Continue Shopping',
             onPress: () => {
               clearCart();
-              navigation.navigate('UserDashboard' as never);
+              navigation.navigate('UserDashboard');
             },
           },
         ]
@@ -316,7 +326,7 @@ export default function Checkout() {
 
           <TouchableOpacity
             style={styles.addCardButton}
-            onPress={() => navigation.navigate('Profile' as never)}
+            onPress={() => navigation.navigate('Profile')}
           >
             <Ionicons name="person-circle-outline" size={20} color="#ff6b6b" />
             <Text style={styles.addCardText}>
@@ -331,7 +341,9 @@ export default function Checkout() {
             <View style={styles.userInfo}>
               <Text style={styles.userText}>Name: {user.displayName || 'User'}</Text>
               <Text style={styles.userText}>Email: {user.email}</Text>
-              <Text style={styles.userText}>Phone: {user.phoneNumber || 'Not provided'}</Text>
+              <Text style={styles.userText}>
+                Phone: {profile?.contactNumber || 'Not provided'}
+              </Text>
             </View>
           </View>
         )}
