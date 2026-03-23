@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+<img src="https://socialify.git.ci/Mluleki23/Task-5---React-Native-Restaurant-App/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Task-5---React-Native-Restaurant-App" width="640" height="320" />
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Get started
 
-1. Install dependencies
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+# 🍔 FoodApp
 
-   ```bash
-   npx expo start
-   ```
+FoodApp is a modern mobile application built with **Expo** and **React Native**. It allows users to browse food items, explore menus, and interact with a clean, responsive interface. The app is designed to run on Android, iOS, and Web, making it flexible and user-friendly.
 
-In the output, you'll find options to open the app in a
+## 🚀 Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+* Cross-platform support (Android, iOS, Web)
+* Browse and explore food items
+* Clean and responsive user interface
+* Fast navigation using Expo Router
+* Firebase integration for backend services
+* Scalable structure for adding cart and ordering features
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🛠️ Tech Stack
 
-## Get a fresh project
+* React Native & Expo
+* Expo Router & React Navigation
+* Firebase
+* React Native Elements
+* Expo Vector Icons
 
-When you're ready, run:
+## 📂 Project Structure
 
-```bash
-npm run reset-project
+```
+foodapp/
+│── app/            # Screens and routes
+│── assets/         # Images and icons
+│── components/     # Reusable components
+│── scripts/        # Utility scripts
+│── package.json    # Dependencies
+│── app.json        # Expo config
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## ⚙️ Installation & Setup
 
-## Learn more
+Clone the repository and install dependencies:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+https://github.com/Mluleki23/Task-5---React-Native-Restaurant-App
+cd foodapp
+npm install
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Start the app:
 
-## Join the community
+```bash
+npm start
+```
 
-Join our community of developers creating universal apps.
+## ▶️ Run on Platforms
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run android   # Android
+npm run ios       # iOS
+npm run web       # Web
+```
+
+## 🔑 Configuration
+
+Firebase is used for backend services.
+Paystack public key is configured in `app.json`:
+
+```json
+"extra": {
+  "paystackPublicKey": "your_public_key"
+}
+```
+
+
+
