@@ -5,6 +5,7 @@ import React from 'react';
 import Cart from '../screens/user/Cart';
 
 import Checkout from '../screens/user/Checkout';
+import OrderTrackingScreen from '../screens/user/OrderTrackingScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 
 import UserDashboard from '../screens/user/UserDashboard';
@@ -90,6 +91,16 @@ export default function UserStack() {
         component={ProfileScreen}
 
         options={{ title: 'Profile' }}
+
+      />
+
+      <Stack.Screen 
+
+        name="OrderTracking" 
+
+        component={OrderTrackingScreen}
+
+        options={{ title: 'Track Order' }}
 
       />
 

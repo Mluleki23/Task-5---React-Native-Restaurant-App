@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -10,12 +10,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { doc, getDoc } from 'firebase/firestore';
 
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { db } from '../../services/firebase';
 import { orderService } from '../../services/orderService';
 import { PaymentMethod, paymentService } from '../../services/paymentService';
+
+interface CheckoutProfileData {
+  name?: string;
+  surname?: string;
+  contactNumber?: string;
+  address?: string;
+  cardNumber?: string;
+}
 
 export default function Checkout() {
   const navigation = useNavigation();
@@ -30,6 +40,30 @@ export default function Checkout() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>('cash_on_delivery');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [profile, setProfile] = useState<CheckoutProfileData | null>(null);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.uid) {
+        return;
+      }
+
+      try {
+        const snapshot = await getDoc(doc(db, 'users', user.uid));
+        if (snapshot.exists()) {
+          const data = snapshot.data() as CheckoutProfileData;
+          setProfile(data);
+          if (!deliveryAddress && data.address) {
+            setDeliveryAddress(data.address);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading checkout profile:', error);
+      }
+    };
+
+    loadProfile();
+  }, [user?.uid]);
 
   const paymentMethods: {
     id: PaymentMethod;
@@ -59,6 +93,11 @@ export default function Checkout() {
 
   const getPaymentMethodLabel = (method: PaymentMethod) =>
     paymentMethods.find((paymentMethod) => paymentMethod.id === method)?.label || method;
+
+  const savedCardLast4 =
+    profile?.cardNumber && profile.cardNumber.length >= 4
+      ? profile.cardNumber.slice(-4)
+      : undefined;
 
   const formatPaymentStatus = (status: string) =>
     status
@@ -92,10 +131,20 @@ export default function Checkout() {
       return;
     }
 
+    if (selectedPaymentMethod === 'card' && !savedCardLast4) {
+      Alert.alert(
+        'Saved Card Required',
+        'Add a card number in your profile before using card payment.'
+      );
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
-      const payment = await paymentService.preparePayment(selectedPaymentMethod, orderTotal);
+      const payment = await paymentService.preparePayment(selectedPaymentMethod, orderTotal, {
+        savedCardLast4,
+      });
       const now = new Date();
 
       const orderId = await orderService.createOrder({
@@ -109,9 +158,12 @@ export default function Checkout() {
         total: orderTotal,
         status: 'pending',
         deliveryAddress: deliveryAddress.trim(),
-        customerName: user.displayName || 'User',
+        customerName:
+          [profile?.name, profile?.surname].filter(Boolean).join(' ') ||
+          user.displayName ||
+          'User',
         customerEmail: user.email || '',
-        customerPhone: user.phoneNumber || '',
+        customerPhone: profile?.contactNumber || user.phoneNumber || '',
         subtotal: cart.totalPrice,
         tax: taxAmount,
         deliveryFee,
@@ -130,7 +182,7 @@ export default function Checkout() {
             text: 'Track Order',
             onPress: () => {
               clearCart();
-              navigation.navigate('UserDashboard' as never);
+              navigation.navigate('OrderTracking' as never, { orderId } as never);
             },
           },
           {
@@ -218,6 +270,22 @@ export default function Checkout() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
+          {savedCardLast4 ? (
+            <View style={styles.savedCardBanner}>
+              <Ionicons name="card-outline" size={18} color="#102a43" />
+              <Text style={styles.savedCardText}>
+                Saved card available: **** **** **** {savedCardLast4}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.savedCardBannerMuted}>
+              <Ionicons name="alert-circle-outline" size={18} color="#c96c3a" />
+              <Text style={styles.savedCardMutedText}>
+                No saved card found. Add one in your profile to use card payment.
+              </Text>
+            </View>
+          )}
+
           {paymentMethods.map((paymentMethod) => (
             <TouchableOpacity
               key={paymentMethod.id}
@@ -246,9 +314,14 @@ export default function Checkout() {
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity style={styles.addCardButton} disabled>
-            <Ionicons name="add-circle-outline" size={20} color="#ff6b6b" />
-            <Text style={styles.addCardText}>Connect Gateway To Enable Saved Cards</Text>
+          <TouchableOpacity
+            style={styles.addCardButton}
+            onPress={() => navigation.navigate('Profile' as never)}
+          >
+            <Ionicons name="person-circle-outline" size={20} color="#ff6b6b" />
+            <Text style={styles.addCardText}>
+              {savedCardLast4 ? 'Manage Saved Card In Profile' : 'Add Saved Card In Profile'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -418,6 +491,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     marginTop: 4,
+  },
+  savedCardBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#edf7f5',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  savedCardText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#102a43',
+    fontWeight: '600',
+    flex: 1,
+  },
+  savedCardBannerMuted: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff7ed',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  savedCardMutedText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#7a3f22',
+    fontWeight: '600',
+    flex: 1,
   },
   addCardButton: {
     flexDirection: 'row',
