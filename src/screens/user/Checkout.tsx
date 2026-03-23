@@ -3,7 +3,9 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,13 +14,18 @@ import {
   View,
 } from 'react-native';
 import { doc, getDoc } from 'firebase/firestore';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 import Button from '../../components/Button';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { db } from '../../services/firebase';
 import { orderService } from '../../services/orderService';
-import { PaymentMethod, paymentService } from '../../services/paymentService';
+import {
+  PaymentMethod,
+  PaymentPreparationResult,
+  paymentService,
+} from '../../services/paymentService';
 
 interface CheckoutProfileData {
   name?: string;
@@ -51,6 +58,8 @@ export default function Checkout() {
     useState<PaymentMethod>('cash_on_delivery');
   const [isProcessing, setIsProcessing] = useState(false);
   const [profile, setProfile] = useState<CheckoutProfileData | null>(null);
+  const [showPaystackModal, setShowPaystackModal] = useState(false);
+  const [paystackHtml, setPaystackHtml] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -88,9 +97,9 @@ export default function Checkout() {
       icon: 'cash-outline',
     },
     {
-      id: 'card',
-      label: 'Card Payment',
-      description: 'Use a payment gateway such as Stripe or Paystack.',
+      id: 'paystack',
+      label: 'Paystack',
+      description: 'Pay securely with card, bank, or wallet through Paystack.',
       icon: 'card-outline',
     },
     {
@@ -104,16 +113,117 @@ export default function Checkout() {
   const getPaymentMethodLabel = (method: PaymentMethod) =>
     paymentMethods.find((paymentMethod) => paymentMethod.id === method)?.label || method;
 
-  const savedCardLast4 =
-    profile?.cardNumber && profile.cardNumber.length >= 4
-      ? profile.cardNumber.slice(-4)
-      : undefined;
-
   const formatPaymentStatus = (status: string) =>
     status
       .split('_')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
+
+  const customerName =
+    [profile?.name, profile?.surname].filter(Boolean).join(' ') || user?.displayName || 'User';
+
+  const createOrderFromPayment = async (payment: PaymentPreparationResult) => {
+    if (!user) {
+      throw new Error('User session is no longer available.');
+    }
+
+    const now = new Date();
+
+    const orderId = await orderService.createOrder({
+      userId: user.uid,
+      items: cart.items.map((item) => ({
+        id: item.id,
+        name: item.foodItem.name,
+        price: item.totalPrice / item.quantity,
+        quantity: item.quantity,
+      })),
+      total: orderTotal,
+      status: 'pending',
+      deliveryAddress: deliveryAddress.trim(),
+      customerName,
+      customerEmail: user.email || '',
+      customerPhone: profile?.contactNumber || user.phoneNumber || '',
+      subtotal: cart.totalPrice,
+      tax: taxAmount,
+      deliveryFee,
+      paymentMethod: selectedPaymentMethod,
+      paymentStatus: payment.status,
+      paymentReference: payment.reference,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    setIsProcessing(false);
+
+    Alert.alert(
+      'Order Placed Successfully!',
+      `Order #${orderId.slice(-6)} has been placed.\n\nDelivery address:\n${deliveryAddress}\n\nOrder total: R${orderTotal.toFixed(2)}\nPayment: ${getPaymentMethodLabel(selectedPaymentMethod)}\nStatus: ${formatPaymentStatus(payment.status)}${payment.message ? `\n\n${payment.message}` : ''}`,
+      [
+        {
+          text: 'Track Order',
+          onPress: () => {
+            clearCart();
+            navigation.navigate('OrderTracking', { orderId });
+          },
+        },
+        {
+          text: 'Continue Shopping',
+          onPress: () => {
+            clearCart();
+            navigation.navigate('UserDashboard');
+          },
+        },
+      ]
+    );
+  };
+
+  const resetPaystackState = () => {
+    setShowPaystackModal(false);
+    setPaystackHtml(null);
+    setIsProcessing(false);
+  };
+
+  const handlePaystackMessage = async (event: WebViewMessageEvent) => {
+    let payload: { type?: string; reference?: string; message?: string } = {};
+
+    try {
+      payload = JSON.parse(event.nativeEvent.data);
+    } catch {
+      payload = {};
+    }
+
+    if (payload.type === 'cancel') {
+      resetPaystackState();
+      Alert.alert('Payment Cancelled', payload.message || 'Paystack checkout was cancelled.');
+      return;
+    }
+
+    if (payload.type === 'error') {
+      resetPaystackState();
+      Alert.alert('Payment Error', payload.message || 'Unable to complete Paystack payment.');
+      return;
+    }
+
+    if (payload.type !== 'success' || !payload.reference) {
+      return;
+    }
+
+    try {
+      await createOrderFromPayment({
+        status: 'paid',
+        reference: payload.reference,
+        message: payload.message || 'Paystack payment completed successfully.',
+      });
+      resetPaystackState();
+    } catch (error) {
+      console.error('Error finalizing Paystack order:', error);
+      resetPaystackState();
+      Alert.alert(
+        'Error',
+        'Payment succeeded, but we could not save the order. Please contact support.'
+      );
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!user) {
@@ -141,10 +251,10 @@ export default function Checkout() {
       return;
     }
 
-    if (selectedPaymentMethod === 'card' && !savedCardLast4) {
+    if (selectedPaymentMethod === 'paystack' && !user.email) {
       Alert.alert(
-        'Saved Card Required',
-        'Add a card number in your profile before using card payment.'
+        'Email Required',
+        'Paystack requires an email address on your account before payment can start.'
       );
       return;
     }
@@ -152,61 +262,32 @@ export default function Checkout() {
     setIsProcessing(true);
 
     try {
-      const payment = await paymentService.preparePayment(selectedPaymentMethod, orderTotal, {
-        savedCardLast4,
-      });
-      const now = new Date();
+      if (selectedPaymentMethod === 'paystack') {
+        const request = paymentService.createPaystackPaymentRequest(orderTotal, {
+          email: user.email || '',
+          firstname: profile?.name,
+          lastname: profile?.surname,
+          phone: profile?.contactNumber || user.phoneNumber || undefined,
+        });
 
-      const orderId = await orderService.createOrder({
-        userId: user.uid,
-        items: cart.items.map((item) => ({
-          id: item.id,
-          name: item.foodItem.name,
-          price: item.totalPrice / item.quantity,
-          quantity: item.quantity,
-        })),
-        total: orderTotal,
-        status: 'pending',
-        deliveryAddress: deliveryAddress.trim(),
-        customerName:
-          [profile?.name, profile?.surname].filter(Boolean).join(' ') ||
-          user.displayName ||
-          'User',
-        customerEmail: user.email || '',
-        customerPhone: profile?.contactNumber || user.phoneNumber || '',
-        subtotal: cart.totalPrice,
-        tax: taxAmount,
-        deliveryFee,
-        paymentMethod: selectedPaymentMethod,
-        paymentStatus: payment.status,
-        paymentReference: payment.reference,
-        createdAt: now,
-        updatedAt: now,
-      });
+        Alert.alert(
+          'Paystack Debug',
+          `Key: ${request.key.slice(0, 12)}...\nEmail: ${request.email}\nAmount: ${request.amount}\nReference: ${request.reference}\nCurrency: ${request.currency || 'default account currency'}`
+        );
 
-      Alert.alert(
-        'Order Placed Successfully!',
-        `Order #${orderId.slice(-6)} has been placed.\n\nDelivery address:\n${deliveryAddress}\n\nOrder total: R${orderTotal.toFixed(2)}\nPayment: ${getPaymentMethodLabel(selectedPaymentMethod)}\nStatus: ${formatPaymentStatus(payment.status)}${payment.message ? `\n\n${payment.message}` : ''}`,
-        [
-          {
-            text: 'Track Order',
-            onPress: () => {
-              clearCart();
-              navigation.navigate('OrderTracking', { orderId });
-            },
-          },
-          {
-            text: 'Continue Shopping',
-            onPress: () => {
-              clearCart();
-              navigation.navigate('UserDashboard');
-            },
-          },
-        ]
-      );
+        setPaystackHtml(paymentService.createPaystackCheckoutHtml(request));
+        setShowPaystackModal(true);
+        return;
+      }
+
+      const payment = await paymentService.preparePayment(selectedPaymentMethod, orderTotal);
+      await createOrderFromPayment(payment);
     } catch (error) {
-      Alert.alert('Error', 'Failed to place order. Please try again.');
-    } finally {
+      console.error('Error placing order:', error);
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to place order. Please try again.'
+      );
       setIsProcessing(false);
     }
   };
@@ -280,18 +361,18 @@ export default function Checkout() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
-          {savedCardLast4 ? (
-            <View style={styles.savedCardBanner}>
-              <Ionicons name="card-outline" size={18} color="#102a43" />
-              <Text style={styles.savedCardText}>
-                Saved card available: **** **** **** {savedCardLast4}
-              </Text>
-            </View>
-          ) : (
+          <View style={styles.savedCardBanner}>
+            <Ionicons name="lock-closed-outline" size={18} color="#102a43" />
+            <Text style={styles.savedCardText}>
+              Paystack opens a secure checkout page for card and online payments.
+            </Text>
+          </View>
+
+          {!user?.email && (
             <View style={styles.savedCardBannerMuted}>
               <Ionicons name="alert-circle-outline" size={18} color="#c96c3a" />
               <Text style={styles.savedCardMutedText}>
-                No saved card found. Add one in your profile to use card payment.
+                Add an email address to your account before using Paystack.
               </Text>
             </View>
           )}
@@ -324,15 +405,6 @@ export default function Checkout() {
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity
-            style={styles.addCardButton}
-            onPress={() => navigation.navigate('Profile')}
-          >
-            <Ionicons name="person-circle-outline" size={20} color="#ff6b6b" />
-            <Text style={styles.addCardText}>
-              {savedCardLast4 ? 'Manage Saved Card In Profile' : 'Add Saved Card In Profile'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {user && (
@@ -357,6 +429,40 @@ export default function Checkout() {
           style={styles.placeOrderButton}
         />
       </View>
+
+      <Modal
+        animationType="slide"
+        visible={showPaystackModal}
+        onRequestClose={resetPaystackState}
+      >
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={resetPaystackState}>
+            <Ionicons name="close" size={24} color="#102a43" />
+          </TouchableOpacity>
+          <Text style={styles.modalTitle}>Paystack Checkout</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        {paystackHtml ? (
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: paystackHtml }}
+            onMessage={handlePaystackMessage}
+            startInLoadingState
+            renderLoading={() => (
+              <View style={styles.webViewLoader}>
+                <ActivityIndicator size="large" color="#ff6b6b" />
+                <Text style={styles.webViewLoaderText}>Loading secure payment...</Text>
+              </View>
+            )}
+          />
+        ) : (
+          <View style={styles.webViewLoader}>
+            <ActivityIndicator size="large" color="#ff6b6b" />
+            <Text style={styles.webViewLoaderText}>Preparing payment...</Text>
+          </View>
+        )}
+      </Modal>
     </View>
   );
 }
@@ -534,23 +640,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
-  addCardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#ff6b6b',
-    borderRadius: 8,
-    marginTop: 10,
-    opacity: 0.7,
-  },
-  addCardText: {
-    fontSize: 16,
-    color: '#ff6b6b',
-    marginLeft: 8,
-    fontWeight: '500',
-  },
   userInfo: {
     gap: 8,
   },
@@ -566,5 +655,33 @@ const styles = StyleSheet.create({
   },
   placeOrderButton: {
     marginBottom: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#102a43',
+  },
+  webViewLoader: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+  },
+  webViewLoaderText: {
+    marginTop: 12,
+    fontSize: 15,
+    color: '#486581',
+    textAlign: 'center',
   },
 });

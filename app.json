@@ -82,6 +82,12 @@
 
     ],
 
+    "extra": {
+
+      "paystackPublicKey": "pk_test_31d9d9de7fd9eb1299021727a892dce2601c48bd"
+
+    },
+
     "experiments": {
 
       "typedRoutes": true,
