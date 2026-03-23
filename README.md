@@ -1,7 +1,7 @@
 <img src="https://socialify.git.ci/Mluleki23/Task-5---React-Native-Restaurant-App/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Task-5---React-Native-Restaurant-App" width="640" height="320" />
 
 
-Here is your **clean single-file README.md** 👇
+
 
 ---
 
@@ -43,7 +43,7 @@ foodapp/
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/foodapp.git
+https://github.com/Mluleki23/Task-5---React-Native-Restaurant-App
 cd foodapp
 npm install
 ```
