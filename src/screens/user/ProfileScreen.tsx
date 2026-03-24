@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,8 +28,12 @@ interface UserProfileData {
   role?: string;
 }
 
+type UserStackParamList = {
+  MyOrders: undefined;
+};
+
 export default function ProfileScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<UserStackParamList>>();
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -112,15 +117,20 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Actions</Text>
           <Button
+            title="My Orders"
+            onPress={() => navigation.navigate('MyOrders')}
+            style={styles.primaryButton}
+          />
+          <Button
             title="Back To Dashboard"
             onPress={() => navigation.goBack()}
-            style={styles.primaryButton}
+            style={styles.secondaryButton}
           />
           <Button
             title="Logout"
             onPress={handleLogout}
             variant="outline"
-            style={styles.secondaryButton}
+            style={styles.tertiaryButton}
           />
         </View>
       </ScrollView>
@@ -252,6 +262,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   secondaryButton: {
+    marginBottom: 12,
+    borderRadius: 14,
+  },
+  tertiaryButton: {
     borderRadius: 14,
   },
 });

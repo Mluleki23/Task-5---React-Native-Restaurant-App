@@ -40,6 +40,7 @@ type UserStackParamList = {
   Cart: undefined;
   Checkout: undefined;
   Profile: undefined;
+  MyOrders: undefined;
   OrderTracking: { orderId: string };
   Login: undefined;
 };
@@ -167,10 +168,10 @@ export default function Checkout() {
           },
         },
         {
-          text: 'Continue Shopping',
+          text: 'View My Orders',
           onPress: () => {
             clearCart();
-            navigation.navigate('UserDashboard');
+            navigation.navigate('MyOrders');
           },
         },
       ]

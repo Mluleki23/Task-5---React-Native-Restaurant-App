@@ -26,6 +26,7 @@ type UserStackParamList = {
   Cart: undefined;
   Checkout: undefined;
   Profile: undefined;
+  MyOrders: undefined;
 };
 
 type UserNavigationProp = NativeStackNavigationProp<UserStackParamList>;
@@ -290,6 +291,17 @@ export default function UserDashboard() {
             )}
           </View>
           <Text style={styles.navText}>Cart</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigation.navigate('MyOrders')}
+          activeOpacity={0.85}
+        >
+          <View style={styles.navIconWrap}>
+            <Ionicons name="receipt-outline" size={20} color="#52606d" />
+          </View>
+          <Text style={styles.navText}>Orders</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
