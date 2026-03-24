@@ -1,22 +1,22 @@
-import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { User } from '../types';
 import { db } from './firebase';
 
 export const userService = {
   async getAllUsers(): Promise<User[]> {
     try {
-      const usersQuery = query(
-        collection(db, 'users'),
-        orderBy('createdAt', 'desc')
-      );
-      const querySnapshot = await getDocs(usersQuery);
-      
-      return querySnapshot.docs.map(doc => ({
+      const querySnapshot = await getDocs(collection(db, 'users'));
+
+      const users = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(0),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(0),
       })) as User[];
+
+      return users.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      );
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;

@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext<any>(null);
 
@@ -38,11 +38,15 @@ export const AuthProvider = ({ children }: any) => {
 
   const register = async (email: string, password: string, data: any) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);
+    const { password: _password, ...profileData } = data ?? {};
     await setDoc(doc(db, "users", res.user.uid), {
       uid: res.user.uid,
       email,
       role: "user", // default role
-      ...data,
+      isActive: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      ...profileData,
     });
     await signOut(auth);
   };
