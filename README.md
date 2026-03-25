@@ -9,6 +9,14 @@
 
 FoodApp is a modern mobile application built with **Expo** and **React Native**. It allows users to browse food items, explore menus, and interact with a clean, responsive interface. The app is designed to run on Android, iOS, and Web, making it flexible and user-friendly.
 
+##Admin Details
+
+
+email: Admin@gmail.com
+password: $$Dut030202
+
+
+
 ## 🚀 Features
 
 * Cross-platform support (Android, iOS, Web)
