@@ -12,7 +12,7 @@ FoodApp is a modern mobile application built with **Expo** and **React Native**.
 ##Admin Details
 
 
-email: Admin@gmail.com
+email: admin@gmail.com
 password: $$Dut030202
 
 
